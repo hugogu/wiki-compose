@@ -3,6 +3,8 @@ services:
 
   db:
     image: postgres:14-alpine
+    hostname: postgres
+    container_name: wiki-db
     environment:
       POSTGRES_DB: wiki
       POSTGRES_PASSWORD: ${DB_WIKI_PASSWORD}
@@ -10,22 +12,32 @@ services:
     logging:
       driver: "none"
     restart: unless-stopped
+    networks:
+      - common_backend
     volumes:
       - ./db-data:/var/lib/postgresql/data
 
   wiki:
     image: ghcr.io/requarks/wiki:2.5
+    hostname: wiki
+    container_name: wiki-portal
     depends_on:
       - db
     environment:
       DB_TYPE: postgres
-      DB_HOST: db
+      DB_HOST: postgres
       DB_PORT: 5432
       DB_USER: wikijs
       DB_PASS: ${DB_WIKI_PASSWORD}
       DB_NAME: wiki
     restart: unless-stopped
+    networks:
+      - common_backend
+      - frontend
     ports:
       - "8081:3000"
 
-
+networks:
+  common_backend:
+    external: true
+  frontend:
